@@ -8,8 +8,9 @@ RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak \
     && cat /etc/apt/sources.list \
     && DEBIAN_FRONTEND=noninteractive apt-get update --fix-missing
 
-ENV PROTOBUF protobuf-all-3.13.0.tar.gz
-ENV PROTOBUF_PATH protobuf-3.13.0
+ENV PROTOBUF_VERSION 3.13.0
+ENV PROTOBUF protobuf-all-${PROTOBUF_VERSION}.tar.gz
+ENV PROTOBUF_PATH protobuf-${PROTOBUF_VERSION}
 COPY $PROTOBUF ./
 
 RUN buildDeps=" \
