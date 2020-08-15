@@ -31,7 +31,7 @@ RUN buildDeps=" \
     && DEBIAN_FRONTEND=noninteractive apt-get install --assume-yes apt-utils -y $buildDeps $runtimeDeps --no-install-recommends \
     && tar xfz $PROTOBUF \
     && cd $PROTOBUF_PATH && ./configure && make && make install && ldconfig /usr/local/lib \
-    && rm -rf $PROTOBUF $PROTOBUF_PATH \
+    && cd ../ && rm -rf $PROTOBUF $PROTOBUF_PATH \
     && /bin/cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
     && echo 'Asia/Shanghai' >/etc/timezone \
     && rm -r /var/lib/apt/lists/*
