@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  #nginx:
+    #image: nginx:1.14
+    #container_name: nginx
+    #volumes:
+      #- ./code/:/var/www/code
+      #- ./logs/:/var/log/nginx
+      #- ./nginx/conf/conf.d/:/etc/nginx/conf.d
+      #- ./nginx/conf/ssl/:/etc/nginx/ssl
+    #ports:
+      #- "80:80"
+      #- "443:443"
+
+  golang:
+    build:
+      context: ./golang
+    container_name: golang
+    volumes:
+      - ./code/:/go/src
+      - ./supervisor:/etc/supervisor/conf.d
+    ports:
+      - "8088:8088"
+    tty: true
+
+  #cache:
+    #image: redis:5.0
+    #container_name: cache
+    #ports:
+      #- "6379:6379"
+
+  #database:
+    #build:
+      #context: ./database
+    #environment:
+      #- MYSQL_DATABASE=mydb
+      #- MYSQL_USER=myuser
+      #- MYSQL_PASSWORD=secret
+      #- MYSQL_ROOT_PASSWORD=docker
+      #- TZ=Asia/Shanghai
