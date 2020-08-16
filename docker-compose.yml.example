@@ -13,22 +13,37 @@ services:
       #- "80:80"
       #- "443:443"
 
-  golang:
+  gome:
     build:
       context: ./golang
-    container_name: golang
+    container_name: gome
     volumes:
       - ./code/:/go/src
+      - ./code/gome:/go/src/gome
       - ./supervisor:/etc/supervisor/conf.d
     ports:
       - "8088:8088"
     tty: true
 
-  #cache:
-    #image: redis:5.0
-    #container_name: cache
-    #ports:
-      #- "6379:6379"
+  abbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    volumes:
+      - ./rabbitmq/etc/:/etc/rabbitmq/
+      - ./rabbitmq/data/:/var/lib/rabbitmq/
+      - ./logs/:/var/log/rabbitmq/
+    environment:
+      RABBITMQ_DEFAULT_USER: "username"
+      RABBITMQ_DEFAULT_PASS: "password"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  redis:
+    image: redis:5.0
+    container_name: redis
+    ports:
+      - "6379:6379"
 
   #database:
     #build:
