@@ -12,7 +12,9 @@
 #mkdir -p /var/log/your_need_dic
 #chmod -R 777 /var/log/your_need_dic
 
+cd $GOPATH/src/gome && go mod init && go mod tidy
+
 #start supervisord
-#/usr/bin/supervisord
+/usr/bin/supervisord -c /etc/supervisor/supervisord.conf
 
 #tail -f /dev/null
