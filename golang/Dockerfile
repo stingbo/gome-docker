@@ -1,13 +1,26 @@
-FROM golang
+FROM golang:1.21.5
 LABEL maintainer="sting_bo@163.com"
 ENV DEBIAN_FRONTEND noninteractive
 
 # 修改镜像源
-RUN cp /etc/apt/sources.list /etc/apt/sources.list.bak \
+# 如果 /etc/apt/sources.list 不存在，则创建并写入内容
+RUN if [ ! -f /etc/apt/sources.list ]; then \
+    echo "Creating /etc/apt/sources.list" \
+    && echo "deb https://mirrors.aliyun.com/debian/ bookworm main contrib non-free non-free-firmware" > /etc/apt/sources.list \
+    && echo "deb https://mirrors.aliyun.com/debian-security/ bookworm-security main contrib non-free non-free-firmware" >> /etc/apt/sources.list \
+    && echo "deb https://mirrors.aliyun.com/debian/ bookworm-updates main contrib non-free non-free-firmware" >> /etc/apt/sources.list \
+    && echo "deb https://mirrors.aliyun.com/debian/ bookworm-backports main contrib non-free non-free-firmware" >> /etc/apt/sources.list \
+    && echo "deb-src https://mirrors.aliyun.com/debian/ bookworm main contrib non-free non-free-firmware" >> /etc/apt/sources.list \
+    && echo "deb-src https://mirrors.aliyun.com/debian-security/ bookworm-security main contrib non-free non-free-firmware" >> /etc/apt/sources.list \
+    && echo "deb-src https://mirrors.aliyun.com/debian/ bookworm-updates main contrib non-free non-free-firmware" >> /etc/apt/sources.list \
+    && echo "deb-src https://mirrors.aliyun.com/debian/ bookworm-backports main contrib non-free non-free-firmware" >> /etc/apt/sources.list; \
+    else \
+    echo "Modifying existing /etc/apt/sources.list" \
     && sed -i "s@http://deb.debian.org@http://mirrors.aliyun.com@g" /etc/apt/sources.list \
-    && sed -i "s@security.debian.org/debian-security@mirrors.aliyun.com/debian-security@g" /etc/apt/sources.list \
-    && cat /etc/apt/sources.list \
-    && apt-get update --fix-missing
+    && sed -i "s@security.debian.org/debian-security@mirrors.aliyun.com/debian-security@g" /etc/apt/sources.list; \
+    fi
+
+RUN apt-get clean && apt-get update
 
 ENV PROTOBUF_VERSION 3.13.0
 ENV PROTOBUF protobuf-all-${PROTOBUF_VERSION}.tar.gz
