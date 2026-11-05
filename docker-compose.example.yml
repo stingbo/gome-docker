@@ -3,17 +3,12 @@ x-rabbitmq-environment: &rabbitmq-environment
   RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
 
 x-gome: &gome
-  image: gome-docker:${GOME_VERSION:-v1.0.2}
-  pull_policy: never
+  image: ${GOME_IMAGE:-ghcr.io/stingbo/gome:v1.0.2}
   environment: *rabbitmq-environment
 
 services:
   server:
     <<: *gome
-    build:
-      context: ./golang
-      args:
-        GOME_VERSION: ${GOME_VERSION:-v1.0.2}
     ports:
       - "127.0.0.1:${GOME_PORT:-8088}:8088"
     restart: unless-stopped
@@ -52,7 +47,7 @@ services:
         condition: service_started
 
   redis:
-    image: redis:7.4-alpine
+    image: ${REDIS_IMAGE:-redis:7.4-alpine}
     command: ["redis-server", "--appendonly", "yes", "--appendfsync", "always", "--no-appendfsync-on-rewrite", "no", "--maxmemory-policy", "noeviction"]
     volumes:
       - redis-data:/data
@@ -64,7 +59,7 @@ services:
     restart: unless-stopped
 
   rabbitmq:
-    image: rabbitmq:4
+    image: ${RABBITMQ_IMAGE:-rabbitmq:4}
     hostname: rabbitmq
     environment: *rabbitmq-environment
     volumes:
