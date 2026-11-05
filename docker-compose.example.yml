@@ -1,32 +1,81 @@
+x-rabbitmq-environment: &rabbitmq-environment
+  RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-gome}
+  RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
+
+x-gome: &gome
+  image: gome-docker:${GOME_VERSION:-v1.0.2}
+  pull_policy: never
+  environment: *rabbitmq-environment
+
 services:
-  gome:
+  server:
+    <<: *gome
     build:
       context: ./golang
-    container_name: gome
-    volumes:
-      - ./code/:/go/src
-      - ./code/gome:/go/src/gome
-      - ./supervisor:/etc/supervisor/conf.d
+      args:
+        GOME_VERSION: ${GOME_VERSION:-v1.0.2}
     ports:
-      - "8088:8088"
-    tty: true
+      - "127.0.0.1:${GOME_PORT:-8088}:8088"
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
-    volumes:
-      - ./rabbitmq/etc/:/etc/rabbitmq/
-      - ./rabbitmq/data/:/var/lib/rabbitmq/
-      - ./logs/:/var/log/rabbitmq/
+  match:
+    <<: *gome
+    command: ["match", "${GOME_SYMBOL:-btc2usdt}"]
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_started
+
+  notice:
+    <<: *gome
+    profiles: ["notice"]
+    command: ["notice", "${GOME_SYMBOL:-btc2usdt}"]
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_started
+
+  client:
+    <<: *gome
+    profiles: ["tools"]
     environment:
-      RABBITMQ_DEFAULT_USER: "username"
-      RABBITMQ_DEFAULT_PASS: "password"
-    ports:
-      - "5672:5672"
-      - "15672:15672"
+      <<: *rabbitmq-environment
+      GOME_GRPC_HOST: server
+    command: ["client", "getDepth", "${GOME_SYMBOL:-btc2usdt}", "0"]
+    depends_on:
+      server:
+        condition: service_started
 
   redis:
-    image: redis:6.0
-    container_name: redis
-    ports:
-      - "6379:6379"
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "always", "--no-appendfsync-on-rewrite", "no", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:4
+    hostname: rabbitmq
+    environment: *rabbitmq-environment
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+  rabbitmq-data:
